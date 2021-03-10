@@ -1,10 +1,9 @@
 from datetime import date
 from time import sleep
 from albert import *
+from geopy import *
 import requests
 import json
-from geopy import *
-from geopy.extra.rate_limiter import RateLimiter
 """
 Shows the weather for the selected city.
 
@@ -19,14 +18,18 @@ __triggers__ = "wt "
 __authors__  = "elements72, adrianoRieti"
 __py_deps__ = "geopy"
 
+informations={}
+
 def initialize():
-    pass
+    global informations
+    f = open("data.json", "r")
+    informations = json.load(f)
+    f.close()
 
 def handleQuery(query):
     if not query.isTriggered:
         return
     city = query.string
-    debug(city)
     data = getData(city, query)
     if data != None:
         return make_item(city, data)
@@ -51,13 +54,9 @@ def make_item(city, data):
     temperature = ""
     imgDir = "./images/"
     iconPath = imgDir + "warning.png"
-    iconPaths = {"clear":{"iconPath": "sun.png"}, "pcloudy":{"iconPath": "cloud.png"}, "mcloudy":{"iconPath": "cloud.png"}, "cloudy":{"iconPath": "044-cloudy-2.png"},
-                "humid":{"iconPath": "027-humidity.png"}, "lightrain":{"iconPath": "022-rain-1.png"}, "oshower": {"iconPath": "030-storm.png"}, 
-                "ishower":{"iconPath": "rain.png"}, "rain":{"iconPath": "rain.png"}, "lightsnow":{"iconPath": "snowy.png"}, 
-                "snow":{"iconPath": "snowy.png"}, "rainsnow":{"iconPath": "017-snowy-1.png"}}
     if data != None:
-        iconPath = imgDir + iconPaths[data["weather"]]["iconPath"]
-        text = text + " " + data["weather"]
+        iconPath = imgDir + informations[data["weather"]]["iconPath"]
+        text = text + " " + informations[data["weather"]]["description"]
         temperature = "Max:{}° Min:{}°".format(data["temp2m"]["max"], data["temp2m"]["min"])
     return [Item(
         id = __title__,
