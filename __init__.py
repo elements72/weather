@@ -1,7 +1,6 @@
-from datetime import date
 from time import sleep
 from albert import *
-from geopy import *
+from geopy import geocoders, Nominatim
 import requests
 import json
 """
@@ -31,33 +30,35 @@ def handleQuery(query):
         return
     city = query.string
     data = getData(city, query)
-    if data != None:
-        return make_item(city, data)
-    else:
-        return
-        #return make_item("City not found", None)
+    if query.isValid:
+        return make_item(data)
+
 
 def getData(city, query):
+    data = None
+    sleep(1)
     if query.isValid:
-        geocoder = Nominatim(user_agent="http")
-        location = geocoder.geocode(city)
+        geocoder = Nominatim(user_agent="albert-weather")
+        location = geocoder.geocode(city, featuretype="city", language="en")
+        info(str(location))
         if location != None:
             url = "http://www.7timer.info/bin/api.pl?lon={0}&lat={1}&lang=it&product=civillight&output=json".format(location.longitude, location.latitude)
             response = requests.get(url)
             data = json.loads(response.text)
-            return data["dataseries"][0]
-    return None
+            data = {"wtInfo": data["dataseries"][0], "city": location.address}
+    return data
 
 
-def make_item(city, data):
-    text = city
+def make_item(data):
+    text = "City not found"
     temperature = ""
     imgDir = "./images/"
     iconPath = imgDir + "warning.png"
     if data != None:
-        iconPath = imgDir + informations[data["weather"]]["iconPath"]
-        text = text + " " + informations[data["weather"]]["description"]
-        temperature = "Max:{}° Min:{}°".format(data["temp2m"]["max"], data["temp2m"]["min"])
+        wtInfo = data["wtInfo"]
+        text = data["city"]
+        iconPath = imgDir + informations[wtInfo["weather"]]["iconPath"]
+        temperature = informations[wtInfo["weather"]]["description"] + ", Max:{}° Min:{}°".format(wtInfo["temp2m"]["max"], wtInfo["temp2m"]["min"])
     return [Item(
         id = __title__,
         text = text,
