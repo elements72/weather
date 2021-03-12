@@ -64,5 +64,7 @@ def make_item(data):
         text = text,
         subtext = temperature,
         icon = iconPath,
-        actions = [],
+        actions = [
+            UrlAction(text="OpenUrl", url="https://www.google.com/search?q=weather {}".format(text))
+        ],
     )]  
